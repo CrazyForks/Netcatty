@@ -67,13 +67,6 @@ async function uploadFile(localPath, remotePath, client, fileSize, transfer, sen
     if (fastSftp && typeof fastSftp.fastPut === "function") {
       return new Promise((resolve, reject) => {
         let settled = false;
-        const abortFastTransfer = () => {
-          if (settled) return;
-          transfer.cancelled = true;
-          try { fastSftp.end(); } catch { }
-        };
-        transfer.abort = abortFastTransfer;
-
         const finish = (err) => {
           if (settled) return;
           settled = true;
@@ -86,6 +79,13 @@ async function uploadFile(localPath, remotePath, client, fileSize, transfer, sen
           else if (err) reject(err);
           else resolve();
         };
+        const abortFastTransfer = () => {
+          if (settled) return;
+          transfer.cancelled = true;
+          try { fastSftp.end(); } catch { }
+          finish(new Error("Transfer cancelled"));
+        };
+        transfer.abort = abortFastTransfer;
 
         if (transfer.cancelled) {
           finish(new Error("Transfer cancelled"));
@@ -167,13 +167,6 @@ async function downloadFile(remotePath, localPath, client, fileSize, transfer, s
     if (fastSftp && typeof fastSftp.fastGet === "function") {
       return new Promise((resolve, reject) => {
         let settled = false;
-        const abortFastTransfer = () => {
-          if (settled) return;
-          transfer.cancelled = true;
-          try { fastSftp.end(); } catch { }
-        };
-        transfer.abort = abortFastTransfer;
-
         const finish = (err) => {
           if (settled) return;
           settled = true;
@@ -186,6 +179,13 @@ async function downloadFile(remotePath, localPath, client, fileSize, transfer, s
           else if (err) reject(err);
           else resolve();
         };
+        const abortFastTransfer = () => {
+          if (settled) return;
+          transfer.cancelled = true;
+          try { fastSftp.end(); } catch { }
+          finish(new Error("Transfer cancelled"));
+        };
+        transfer.abort = abortFastTransfer;
 
         if (transfer.cancelled) {
           finish(new Error("Transfer cancelled"));
