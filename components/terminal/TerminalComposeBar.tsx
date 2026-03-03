@@ -76,11 +76,11 @@ export const TerminalComposeBar: React.FC<TerminalComposeBarProps> = ({
                 padding: '6px 10px',
             }}
         >
-            <div className="flex items-end gap-2">
+            <div className="flex items-center gap-2">
                 {/* Broadcast indicator */}
                 {isBroadcastEnabled && (
                     <div
-                        className="flex items-center pb-[7px]"
+                        className="flex items-center"
                         title={t("terminal.composeBar.broadcasting")}
                     >
                         <Radio size={14} className="text-amber-400 animate-pulse" />
@@ -120,18 +120,18 @@ export const TerminalComposeBar: React.FC<TerminalComposeBarProps> = ({
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex items-center gap-0.5 pb-[3px]">
+                <div className="flex items-center gap-0.5">
                     <button
                         className="h-7 w-7 flex items-center justify-center rounded-md transition-colors duration-150"
                         style={{
                             color: fg,
-                            background: `color-mix(in srgb, ${fg} 8%, transparent)`,
+                            background: `color-mix(in srgb, ${fg} 20%, ${bg} 80%)`,
                         }}
                         onMouseEnter={(e) => {
-                            e.currentTarget.style.background = `color-mix(in srgb, ${fg} 16%, transparent)`;
+                            e.currentTarget.style.background = `color-mix(in srgb, ${fg} 30%, ${bg} 70%)`;
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.background = `color-mix(in srgb, ${fg} 8%, transparent)`;
+                            e.currentTarget.style.background = `color-mix(in srgb, ${fg} 20%, ${bg} 80%)`;
                         }}
                         onClick={handleSend}
                         title={t("terminal.composeBar.send")}
@@ -141,15 +141,16 @@ export const TerminalComposeBar: React.FC<TerminalComposeBarProps> = ({
                     <button
                         className="h-7 w-7 flex items-center justify-center rounded-md transition-colors duration-150"
                         style={{
-                            color: `color-mix(in srgb, ${fg} 50%, transparent)`,
+                            color: `color-mix(in srgb, ${fg} 60%, ${bg} 40%)`,
+                            background: `color-mix(in srgb, ${fg} 12%, ${bg} 88%)`,
                         }}
                         onMouseEnter={(e) => {
-                            e.currentTarget.style.background = `color-mix(in srgb, ${fg} 10%, transparent)`;
+                            e.currentTarget.style.background = `color-mix(in srgb, ${fg} 22%, ${bg} 78%)`;
                             e.currentTarget.style.color = fg;
                         }}
                         onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.color = `color-mix(in srgb, ${fg} 50%, transparent)`;
+                            e.currentTarget.style.background = `color-mix(in srgb, ${fg} 12%, ${bg} 88%)`;
+                            e.currentTarget.style.color = `color-mix(in srgb, ${fg} 60%, ${bg} 40%)`;
                         }}
                         onClick={onClose}
                         title={t("terminal.composeBar.close")}
