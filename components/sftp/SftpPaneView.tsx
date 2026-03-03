@@ -22,6 +22,7 @@ import { useSftpPanePath } from "./hooks/useSftpPanePath";
 import { useSftpPaneSorting } from "./hooks/useSftpPaneSorting";
 import { useSftpPaneVirtualList } from "./hooks/useSftpPaneVirtualList";
 import { useSftpDialogActionHandler } from "./hooks/useSftpDialogAction";
+import { useSftpBookmarks } from "./hooks/useSftpBookmarks";
 
 interface SftpPaneWrapperProps {
   side: "left" | "right";
@@ -84,6 +85,18 @@ const SftpPaneViewInner: React.FC<SftpPaneViewProps> = ({
   });
 
   const { sortField, sortOrder, columnWidths, handleSort, handleResizeStart } = useSftpPaneSorting();
+
+  // Bookmark support
+  const {
+    bookmarks,
+    isCurrentPathBookmarked,
+    toggleBookmark,
+    deleteBookmark,
+  } = useSftpBookmarks({
+    hostId: pane.connection?.hostId,
+    currentPath: pane.connection?.currentPath,
+  });
+
   const { filteredFiles, sortedDisplayFiles } = useSftpPaneFiles({
     files: pane.files,
     filter: pane.filter,
@@ -293,6 +306,11 @@ const SftpPaneViewInner: React.FC<SftpPaneViewProps> = ({
         setFileNameError={setFileNameError}
         setShowNewFileDialog={setShowNewFileDialog}
         setShowNewFolderDialog={setShowNewFolderDialog}
+        bookmarks={bookmarks}
+        isCurrentPathBookmarked={isCurrentPathBookmarked}
+        onToggleBookmark={toggleBookmark}
+        onNavigateToBookmark={callbacks.onNavigateTo}
+        onDeleteBookmark={deleteBookmark}
       />
 
       <SftpPaneFileList
