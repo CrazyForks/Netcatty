@@ -157,6 +157,8 @@ export const createXTermRuntime = (ctx: CreateXTermRuntimeContext): XTermRuntime
 
   const term = new XTerm({
     ...performanceConfig.options,
+    // Override ignoreBracketedPasteMode if user explicitly disables bracketed paste
+    ignoreBracketedPasteMode: settings?.disableBracketedPaste ?? performanceConfig.options.ignoreBracketedPasteMode,
     fontSize: effectiveFontSize,
     fontFamily,
     fontWeight: fontWeight as
