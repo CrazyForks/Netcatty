@@ -877,11 +877,15 @@ const TerminalComponent: React.FC<TerminalProps> = ({
     };
   }, []);
 
+  const disableBracketedPasteRef = useRef(terminalSettings?.disableBracketedPaste ?? false);
+  disableBracketedPasteRef.current = terminalSettings?.disableBracketedPaste ?? false;
+
   const terminalContextActions = useTerminalContextActions({
     termRef,
     sessionRef,
     terminalBackend,
     onHasSelectionChange: setHasSelection,
+    disableBracketedPasteRef,
   });
 
   const handleSnippetClick = (cmd: string) => {
