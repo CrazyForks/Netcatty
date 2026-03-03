@@ -1,10 +1,10 @@
 import { useCallback, useMemo } from "react";
-import type { SftpBookmark } from "../../../domain/models";
-import { useSftpHosts, useSftpUpdateHosts } from "../index";
+import type { Host, SftpBookmark } from "../../../domain/models";
 
 interface UseSftpBookmarksParams {
-    hostId: string | undefined;
+    host: Host | undefined;
     currentPath: string | undefined;
+    onUpdateHost: ((host: Host) => void) | undefined;
 }
 
 interface UseSftpBookmarksResult {
@@ -15,17 +15,10 @@ interface UseSftpBookmarksResult {
 }
 
 export const useSftpBookmarks = ({
-    hostId,
+    host,
     currentPath,
+    onUpdateHost,
 }: UseSftpBookmarksParams): UseSftpBookmarksResult => {
-    const hosts = useSftpHosts();
-    const updateHosts = useSftpUpdateHosts();
-
-    const host = useMemo(
-        () => (hostId ? hosts.find((h) => h.id === hostId) : undefined),
-        [hosts, hostId],
-    );
-
     const bookmarks = useMemo(() => host?.sftpBookmarks ?? [], [host]);
 
     const isCurrentPathBookmarked = useMemo(
@@ -36,17 +29,14 @@ export const useSftpBookmarks = ({
 
     const updateHostBookmarks = useCallback(
         (newBookmarks: SftpBookmark[]) => {
-            if (!hostId) return;
-            const updated = hosts.map((h) =>
-                h.id === hostId ? { ...h, sftpBookmarks: newBookmarks } : h,
-            );
-            updateHosts(updated);
+            if (!host || !onUpdateHost) return;
+            onUpdateHost({ ...host, sftpBookmarks: newBookmarks });
         },
-        [hostId, hosts, updateHosts],
+        [host, onUpdateHost],
     );
 
     const toggleBookmark = useCallback(() => {
-        if (!currentPath || !hostId) return;
+        if (!currentPath || !host) return;
         if (isCurrentPathBookmarked) {
             updateHostBookmarks(bookmarks.filter((b) => b.path !== currentPath));
         } else {
@@ -61,7 +51,7 @@ export const useSftpBookmarks = ({
             };
             updateHostBookmarks([...bookmarks, newBookmark]);
         }
-    }, [currentPath, hostId, isCurrentPathBookmarked, bookmarks, updateHostBookmarks]);
+    }, [currentPath, host, isCurrentPathBookmarked, bookmarks, updateHostBookmarks]);
 
     const deleteBookmark = useCallback(
         (id: string) => {
