@@ -459,9 +459,13 @@ const TerminalLayerInner: React.FC<TerminalLayerProps> = ({
       for (const sid of allSessionIds) {
         terminalBackend.writeToSession(sid, payload);
       }
-    } else if (focusedSessionId) {
-      // Send to focused session only
-      terminalBackend.writeToSession(focusedSessionId, payload);
+    } else {
+      // Send to focused session, or fallback to first available session in workspace
+      const targetId = focusedSessionId
+        ?? sessions.find(s => s.workspaceId === activeWorkspace.id)?.id;
+      if (targetId) {
+        terminalBackend.writeToSession(targetId, payload);
+      }
     }
   }, [activeWorkspace, focusedSessionId, sessions, terminalBackend, isBroadcastEnabled]);
 
