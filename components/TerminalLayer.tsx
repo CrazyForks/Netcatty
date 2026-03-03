@@ -806,7 +806,17 @@ const TerminalLayerInner: React.FC<TerminalLayerProps> = ({
       {activeWorkspace && isComposeBarOpen && (
         <TerminalComposeBar
           onSend={handleComposeSend}
-          onClose={() => setIsComposeBarOpen(false)}
+          onClose={() => {
+            setIsComposeBarOpen(false);
+            // Refocus the terminal pane (matching solo-session behavior)
+            if (focusedSessionId) {
+              requestAnimationFrame(() => {
+                const pane = document.querySelector(`[data-session-id="${focusedSessionId}"]`);
+                const textarea = pane?.querySelector('textarea.xterm-helper-textarea') as HTMLTextAreaElement | null;
+                textarea?.focus();
+              });
+            }
+          }}
           isBroadcastEnabled={isBroadcastEnabled?.(activeWorkspace.id)}
           themeColors={composeBarThemeColors}
         />
