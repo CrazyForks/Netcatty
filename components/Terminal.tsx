@@ -680,6 +680,7 @@ const TerminalComponent: React.FC<TerminalProps> = ({
         termRef.current.options.scrollOnUserInput = terminalSettings.scrollOnInput;
         termRef.current.options.altClickMovesCursor = !terminalSettings.altAsMeta;
         termRef.current.options.wordSeparator = terminalSettings.wordSeparators;
+        termRef.current.options.ignoreBracketedPasteMode = terminalSettings.disableBracketedPaste ?? false;
       }
 
       setTimeout(() => safeFit(), 50);
