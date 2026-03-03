@@ -1,9 +1,8 @@
 import React from "react";
-import { Bookmark, ChevronLeft, FilePlus, Folder, FolderPlus, Home, RefreshCw, Search, Trash2, X } from "lucide-react";
+import { Bookmark, Check, ChevronLeft, FilePlus, Folder, FolderPlus, Home, Languages, RefreshCw, Search, Trash2, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "../../lib/utils";
 import { SftpBreadcrumb } from "./index";
 import type { SftpFilenameEncoding } from "../../types";
@@ -240,19 +239,40 @@ export const SftpPaneToolbar: React.FC<SftpPaneToolbarProps> = ({
 
       <div className="ml-auto flex items-center gap-0.5">
         {!pane.connection?.isLocal && (
-          <Select
-            value={pane.filenameEncoding}
-            onValueChange={(value) => onSetFilenameEncoding(value as SftpFilenameEncoding)}
-          >
-            <SelectTrigger className="h-6 w-[120px] text-[10px]" title={t("sftp.encoding.label")}>
-              <SelectValue placeholder={t("sftp.encoding.label")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="auto">{t("sftp.encoding.auto")}</SelectItem>
-              <SelectItem value="utf-8">{t("sftp.encoding.utf8")}</SelectItem>
-              <SelectItem value="gb18030">{t("sftp.encoding.gb18030")}</SelectItem>
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                title={t("sftp.encoding.label")}
+              >
+                <Languages size={14} />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-36 p-1" align="end">
+              {(["auto", "utf-8", "gb18030"] as const).map((encoding) => (
+                <PopoverClose asChild key={encoding}>
+                  <button
+                    className={cn(
+                      "w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-sm hover:bg-secondary transition-colors",
+                      pane.filenameEncoding === encoding && "bg-secondary"
+                    )}
+                    onClick={() => onSetFilenameEncoding(encoding)}
+                  >
+                    <Check
+                      size={12}
+                      className={cn(
+                        "shrink-0",
+                        pane.filenameEncoding === encoding ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {t(`sftp.encoding.${encoding === "utf-8" ? "utf8" : encoding}`)}
+                  </button>
+                </PopoverClose>
+              ))}
+            </PopoverContent>
+          </Popover>
         )}
         <Button
           variant="ghost"
