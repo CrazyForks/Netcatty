@@ -26,6 +26,7 @@ export const TerminalComposeBar: React.FC<TerminalComposeBarProps> = ({
 }) => {
     const { t } = useI18n();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const isComposingRef = useRef(false);
 
     // Auto-focus on mount
     useEffect(() => {
@@ -54,7 +55,7 @@ export const TerminalComposeBar: React.FC<TerminalComposeBarProps> = ({
     }, [onSend]);
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === 'Enter' && !e.shiftKey && !isComposingRef.current) {
             e.preventDefault();
             handleSend();
         } else if (e.key === 'Escape') {
@@ -88,36 +89,36 @@ export const TerminalComposeBar: React.FC<TerminalComposeBarProps> = ({
                 )}
 
                 {/* Input field */}
-                <div className="flex-1 relative">
-                    <textarea
-                        ref={textareaRef}
-                        className={cn(
-                            "w-full resize-none rounded-md px-3 py-1.5 text-xs font-mono leading-relaxed",
-                            "outline-none transition-all duration-200",
-                            "placeholder:opacity-40",
-                        )}
-                        style={{
-                            backgroundColor: `color-mix(in srgb, ${fg} 6%, ${bg} 94%)`,
-                            color: fg,
-                            border: `1px solid color-mix(in srgb, ${fg} 12%, ${bg} 88%)`,
-                            minHeight: '28px',
-                            maxHeight: '120px',
-                            boxShadow: `inset 0 1px 3px color-mix(in srgb, ${bg} 80%, transparent)`,
-                        }}
-                        rows={1}
-                        placeholder={t("terminal.composeBar.placeholder")}
-                        onInput={handleInput}
-                        onKeyDown={handleKeyDown}
-                        onFocus={(e) => {
-                            e.currentTarget.style.borderColor = `color-mix(in srgb, ${fg} 25%, ${bg} 75%)`;
-                            e.currentTarget.style.boxShadow = `inset 0 1px 3px color-mix(in srgb, ${bg} 80%, transparent), 0 0 0 1px color-mix(in srgb, ${fg} 8%, transparent)`;
-                        }}
-                        onBlur={(e) => {
-                            e.currentTarget.style.borderColor = `color-mix(in srgb, ${fg} 12%, ${bg} 88%)`;
-                            e.currentTarget.style.boxShadow = `inset 0 1px 3px color-mix(in srgb, ${bg} 80%, transparent)`;
-                        }}
-                    />
-                </div>
+                <textarea
+                    ref={textareaRef}
+                    className={cn(
+                        "flex-1 min-w-0 resize-none rounded-md px-3 py-1.5 text-xs font-mono leading-relaxed",
+                        "outline-none transition-all duration-200",
+                        "placeholder:opacity-40",
+                    )}
+                    style={{
+                        backgroundColor: `color-mix(in srgb, ${fg} 6%, ${bg} 94%)`,
+                        color: fg,
+                        border: `1px solid color-mix(in srgb, ${fg} 25%, ${bg} 75%)`,
+                        minHeight: '28px',
+                        maxHeight: '120px',
+                        boxShadow: `inset 0 1px 3px color-mix(in srgb, ${bg} 80%, transparent)`,
+                    }}
+                    rows={1}
+                    placeholder={t("terminal.composeBar.placeholder")}
+                    onInput={handleInput}
+                    onKeyDown={handleKeyDown}
+                    onFocus={(e) => {
+                        e.currentTarget.style.borderColor = `color-mix(in srgb, ${fg} 40%, ${bg} 60%)`;
+                        e.currentTarget.style.boxShadow = `inset 0 1px 3px color-mix(in srgb, ${bg} 80%, transparent), 0 0 0 1px color-mix(in srgb, ${fg} 8%, transparent)`;
+                    }}
+                    onBlur={(e) => {
+                        e.currentTarget.style.borderColor = `color-mix(in srgb, ${fg} 25%, ${bg} 75%)`;
+                        e.currentTarget.style.boxShadow = `inset 0 1px 3px color-mix(in srgb, ${bg} 80%, transparent)`;
+                    }}
+                    onCompositionStart={() => { isComposingRef.current = true; }}
+                    onCompositionEnd={() => { isComposingRef.current = false; }}
+                />
 
                 {/* Action buttons */}
                 <div className="flex items-center gap-0.5">
