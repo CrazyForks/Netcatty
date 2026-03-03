@@ -33,6 +33,7 @@ import { TERMINAL_THEMES } from "../infrastructure/config/terminalThemes";
 
 import { TerminalConnectionDialog } from "./terminal/TerminalConnectionDialog";
 import { TerminalToolbar } from "./terminal/TerminalToolbar";
+import { TerminalComposeBar } from "./terminal/TerminalComposeBar";
 import { TerminalContextMenu } from "./terminal/TerminalContextMenu";
 import { TerminalSearchBar } from "./terminal/TerminalSearchBar";
 import { createTerminalSessionStarters, type PendingAuth } from "./terminal/runtime/createTerminalSessionStarters";
@@ -290,6 +291,7 @@ const TerminalComponent: React.FC<TerminalProps> = ({
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const dragCounterRef = useRef(0);
   const [pendingUploadEntries, setPendingUploadEntries] = useState<DropEntry[]>([]);
+  const [isComposeBarOpen, setIsComposeBarOpen] = useState(false);
 
   const terminalSearch = useTerminalSearch({ searchAddonRef, termRef });
   const {
@@ -1100,6 +1102,8 @@ const TerminalComponent: React.FC<TerminalProps> = ({
       onClose={() => onCloseSession?.(sessionId)}
       isSearchOpen={isSearchOpen}
       onToggleSearch={handleToggleSearch}
+      isComposeBarOpen={isComposeBarOpen}
+      onToggleComposeBar={() => setIsComposeBarOpen(prev => !prev)}
     />
   );
 
@@ -1128,7 +1132,7 @@ const TerminalComponent: React.FC<TerminalProps> = ({
       onClose={inWorkspace ? () => onCloseSession?.(sessionId) : undefined}
     >
       <div
-        className="relative h-full w-full flex overflow-hidden bg-gradient-to-br from-[#050910] via-[#06101a] to-[#0b1220]"
+        className="relative h-full w-full flex flex-col overflow-hidden bg-gradient-to-br from-[#050910] via-[#06101a] to-[#0b1220]"
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -1592,6 +1596,25 @@ const TerminalComponent: React.FC<TerminalProps> = ({
               />
             )}
         </div>
+
+        {/* Compose Bar */}
+        {isComposeBarOpen && (
+          <TerminalComposeBar
+            onSend={(text) => {
+              if (sessionRef.current) {
+                const payload = text + '\r';
+                terminalBackend.writeToSession(sessionRef.current, payload);
+                onBroadcastInput?.(payload, sessionRef.current);
+              }
+            }}
+            onClose={() => {
+              setIsComposeBarOpen(false);
+              termRef.current?.focus();
+            }}
+            isBroadcastEnabled={isBroadcastEnabled}
+            themeColors={effectiveTheme.colors}
+          />
+        )}
 
         <SFTPModal
           host={host}
