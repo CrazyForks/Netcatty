@@ -82,6 +82,7 @@ export const useSftpModalSession = ({
   const [loading, setLoading] = useState(false);
   const [reconnecting, setReconnecting] = useState(false);
   const sftpIdRef = useRef<string | null>(null);
+  const closingPromiseRef = useRef<Promise<void> | null>(null);
   const initializedRef = useRef(false);
   const lastInitialPathRef = useRef<string | undefined>(undefined);
   const localHomeRef = useRef<string | null>(null);
@@ -98,6 +99,9 @@ export const useSftpModalSession = ({
 
   const ensureSftp = useCallback(async () => {
     if (isLocalSession) throw new Error("Local session does not use SFTP");
+    if (closingPromiseRef.current) {
+      await closingPromiseRef.current;
+    }
     if (sftpIdRef.current) return sftpIdRef.current;
     const sftpId = await openSftp({
       sessionId: `sftp-modal-${host.id}`,
@@ -139,14 +143,33 @@ export const useSftpModalSession = ({
   ]);
 
   const closeSftpSession = useCallback(async () => {
-    if (!isLocalSession && sftpIdRef.current) {
+    if (isLocalSession) {
+      sftpIdRef.current = null;
+      return;
+    }
+
+    // Clear ref before awaiting backend close to avoid handing out a stale ID
+    // if the modal is reopened while close is still in flight.
+    const sftpIdToClose = sftpIdRef.current;
+    sftpIdRef.current = null;
+    if (!sftpIdToClose) {
+      return;
+    }
+
+    const currentClosePromise = (async () => {
       try {
-        await closeSftp(sftpIdRef.current);
+        await closeSftp(sftpIdToClose);
       } catch {
         // Silently ignore close errors - connection may already be closed
+      } finally {
+        if (closingPromiseRef.current === currentClosePromise) {
+          closingPromiseRef.current = null;
+        }
       }
-    }
-    sftpIdRef.current = null;
+    })();
+
+    closingPromiseRef.current = currentClosePromise;
+    await currentClosePromise;
   }, [closeSftp, isLocalSession]);
 
   const isSessionError = useCallback((err: unknown): boolean => {
@@ -173,14 +196,7 @@ export const useSftpModalSession = ({
     while (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
       try {
         reconnectAttemptsRef.current += 1;
-        if (sftpIdRef.current) {
-          try {
-            await closeSftp(sftpIdRef.current);
-          } catch {
-            // ignore
-          }
-          sftpIdRef.current = null;
-        }
+        await closeSftpSession();
         await ensureSftp();
         reconnectingRef.current = false;
         setReconnecting(false);
@@ -199,7 +215,7 @@ export const useSftpModalSession = ({
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
-  }, [closeSftp, ensureSftp, t]);
+  }, [closeSftpSession, ensureSftp, t]);
 
   const loadFiles = useCallback(
     async (path: string, options?: { force?: boolean }) => {
@@ -355,7 +371,6 @@ export const useSftpModalSession = ({
       void loadFiles(currentPath);
     } else {
       loadSeqRef.current += 1;
-      void closeSftpSession();
       initializedRef.current = false;
     }
   }, [

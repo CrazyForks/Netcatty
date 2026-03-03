@@ -393,8 +393,34 @@ const SFTPModal: React.FC<SFTPModalProps> = ({
     t,
     useCompressedUpload: sftpUseCompressedUpload,
   });
+  const shouldCloseAfterHideRef = useRef(false);
+
+  const hasActiveTransferTasks = useMemo(
+    () =>
+      uploadTasks.some(
+        (task) =>
+          task.status === "pending" ||
+          task.status === "uploading" ||
+          task.status === "downloading",
+      ),
+    [uploadTasks],
+  );
+
+  useEffect(() => {
+    if (!open && shouldCloseAfterHideRef.current && !uploading && !hasActiveTransferTasks) {
+      shouldCloseAfterHideRef.current = false;
+      void closeSftpSession();
+    }
+  }, [closeSftpSession, hasActiveTransferTasks, open, uploading]);
 
   const handleClose = async () => {
+    if (uploading || hasActiveTransferTasks) {
+      shouldCloseAfterHideRef.current = true;
+      onClose();
+      return;
+    }
+
+    shouldCloseAfterHideRef.current = false;
     await closeSftpSession();
     onClose();
   };
