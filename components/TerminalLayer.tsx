@@ -460,9 +460,12 @@ const TerminalLayerInner: React.FC<TerminalLayerProps> = ({
         terminalBackend.writeToSession(sid, payload);
       }
     } else {
-      // Send to focused session, or fallback to first available session in workspace
-      const targetId = focusedSessionId
-        ?? sessions.find(s => s.workspaceId === activeWorkspace.id)?.id;
+      // Validate focusedSessionId is a live session, then fallback to first available
+      const workspaceSessions = sessions.filter(s => s.workspaceId === activeWorkspace.id);
+      const validFocusedId = focusedSessionId && workspaceSessions.some(s => s.id === focusedSessionId)
+        ? focusedSessionId
+        : undefined;
+      const targetId = validFocusedId ?? workspaceSessions[0]?.id;
       if (targetId) {
         terminalBackend.writeToSession(targetId, payload);
       }
