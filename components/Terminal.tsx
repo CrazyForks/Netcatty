@@ -138,6 +138,8 @@ interface TerminalProps {
   onSplitVertical?: () => void;
   isBroadcastEnabled?: boolean;
   onToggleBroadcast?: () => void;
+  onToggleComposeBar?: () => void;
+  isWorkspaceComposeBarOpen?: boolean;
   onBroadcastInput?: (data: string, sourceSessionId: string) => void;
 }
 
@@ -192,6 +194,8 @@ const TerminalComponent: React.FC<TerminalProps> = ({
   onSplitVertical,
   isBroadcastEnabled,
   onToggleBroadcast,
+  onToggleComposeBar,
+  isWorkspaceComposeBarOpen,
   onBroadcastInput,
 }) => {
   // Timeout for connection - increased to 120s to allow time for keyboard-interactive (2FA) authentication
@@ -1102,8 +1106,8 @@ const TerminalComponent: React.FC<TerminalProps> = ({
       onClose={() => onCloseSession?.(sessionId)}
       isSearchOpen={isSearchOpen}
       onToggleSearch={handleToggleSearch}
-      isComposeBarOpen={isComposeBarOpen}
-      onToggleComposeBar={() => setIsComposeBarOpen(prev => !prev)}
+      isComposeBarOpen={inWorkspace ? isWorkspaceComposeBarOpen : isComposeBarOpen}
+      onToggleComposeBar={inWorkspace ? onToggleComposeBar : () => setIsComposeBarOpen(prev => !prev)}
     />
   );
 
@@ -1132,7 +1136,10 @@ const TerminalComponent: React.FC<TerminalProps> = ({
       onClose={inWorkspace ? () => onCloseSession?.(sessionId) : undefined}
     >
       <div
-        className="relative h-full w-full flex flex-col overflow-hidden bg-gradient-to-br from-[#050910] via-[#06101a] to-[#0b1220]"
+        className={cn(
+          "relative h-full w-full flex overflow-hidden bg-gradient-to-br from-[#050910] via-[#06101a] to-[#0b1220]",
+          isComposeBarOpen && !inWorkspace && "flex-col"
+        )}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -1597,8 +1604,8 @@ const TerminalComponent: React.FC<TerminalProps> = ({
             )}
         </div>
 
-        {/* Compose Bar */}
-        {isComposeBarOpen && (
+        {/* Compose Bar (solo sessions only; workspace uses TerminalLayer's global bar) */}
+        {isComposeBarOpen && !inWorkspace && (
           <TerminalComposeBar
             onSend={(text) => {
               if (sessionRef.current) {

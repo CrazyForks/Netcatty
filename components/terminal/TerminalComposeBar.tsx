@@ -1,13 +1,12 @@
 /**
  * Terminal Compose Bar
- * A text input bar at the bottom of the terminal for composing commands before sending them.
- * Useful for reviewing passwords/complex commands before sending, and for broadcasting to multiple sessions.
+ * A modern text input bar for composing commands before sending them.
+ * Supports pre-reviewing passwords/commands and broadcasting to multiple sessions.
  */
 import { Radio, Send, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useI18n } from '../../application/i18n/I18nProvider';
 import { cn } from '../../lib/utils';
-import { Button } from '../ui/button';
 
 export interface TerminalComposeBarProps {
     onSend: (text: string) => void;
@@ -30,7 +29,9 @@ export const TerminalComposeBar: React.FC<TerminalComposeBarProps> = ({
 
     // Auto-focus on mount
     useEffect(() => {
-        textareaRef.current?.focus();
+        // Small delay to ensure the element is rendered
+        const timer = setTimeout(() => textareaRef.current?.focus(), 50);
+        return () => clearTimeout(timer);
     }, []);
 
     // Auto-resize textarea
@@ -38,7 +39,6 @@ export const TerminalComposeBar: React.FC<TerminalComposeBarProps> = ({
         const el = textareaRef.current;
         if (!el) return;
         el.style.height = 'auto';
-        // Clamp between 1 line (~24px) and ~5 lines (~120px)
         el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
     }, []);
 
@@ -63,64 +63,100 @@ export const TerminalComposeBar: React.FC<TerminalComposeBarProps> = ({
         }
     }, [handleSend, onClose]);
 
-    const bgColor = themeColors?.background ?? '#0a0a0a';
-    const fgColor = themeColors?.foreground ?? '#d4d4d4';
-    const borderColor = `color-mix(in srgb, ${fgColor} 15%, ${bgColor} 85%)`;
-    const inputBg = `color-mix(in srgb, ${fgColor} 6%, ${bgColor} 94%)`;
+    const bg = themeColors?.background ?? '#0a0a0a';
+    const fg = themeColors?.foreground ?? '#d4d4d4';
 
     return (
         <div
-            className="flex items-end gap-1.5 px-2 py-1.5 border-t flex-shrink-0"
+            className="flex-shrink-0"
             style={{
-                backgroundColor: bgColor,
-                borderColor: borderColor,
+                background: `linear-gradient(to top, ${bg}, color-mix(in srgb, ${fg} 4%, ${bg} 96%))`,
+                borderTop: `1px solid color-mix(in srgb, ${fg} 10%, ${bg} 90%)`,
+                borderRadius: '0 0 8px 8px',
+                padding: '6px 10px',
             }}
         >
-            {isBroadcastEnabled && (
-                <div className="flex items-center pb-1" title={t("terminal.composeBar.broadcasting")}>
-                    <Radio size={14} className="text-amber-400 animate-pulse" />
-                </div>
-            )}
-            <textarea
-                ref={textareaRef}
-                className={cn(
-                    "flex-1 resize-none rounded px-2 py-1 text-xs font-mono",
-                    "outline-none border focus:ring-1 focus:ring-primary/50",
-                    "placeholder:text-muted-foreground/50",
+            <div className="flex items-end gap-2">
+                {/* Broadcast indicator */}
+                {isBroadcastEnabled && (
+                    <div
+                        className="flex items-center pb-[7px]"
+                        title={t("terminal.composeBar.broadcasting")}
+                    >
+                        <Radio size={14} className="text-amber-400 animate-pulse" />
+                    </div>
                 )}
-                style={{
-                    backgroundColor: inputBg,
-                    color: fgColor,
-                    borderColor: borderColor,
-                    minHeight: '24px',
-                    maxHeight: '120px',
-                }}
-                rows={1}
-                placeholder={t("terminal.composeBar.placeholder")}
-                onInput={handleInput}
-                onKeyDown={handleKeyDown}
-            />
-            <div className="flex items-center gap-0.5 pb-0.5">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 p-0"
-                    style={{ color: fgColor }}
-                    onClick={handleSend}
-                    title={t("terminal.composeBar.send")}
-                >
-                    <Send size={12} />
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 p-0"
-                    style={{ color: fgColor }}
-                    onClick={onClose}
-                    title={t("terminal.composeBar.close")}
-                >
-                    <X size={11} />
-                </Button>
+
+                {/* Input field */}
+                <div className="flex-1 relative">
+                    <textarea
+                        ref={textareaRef}
+                        className={cn(
+                            "w-full resize-none rounded-md px-3 py-1.5 text-xs font-mono leading-relaxed",
+                            "outline-none transition-all duration-200",
+                            "placeholder:opacity-40",
+                        )}
+                        style={{
+                            backgroundColor: `color-mix(in srgb, ${fg} 6%, ${bg} 94%)`,
+                            color: fg,
+                            border: `1px solid color-mix(in srgb, ${fg} 12%, ${bg} 88%)`,
+                            minHeight: '28px',
+                            maxHeight: '120px',
+                            boxShadow: `inset 0 1px 3px color-mix(in srgb, ${bg} 80%, transparent)`,
+                        }}
+                        rows={1}
+                        placeholder={t("terminal.composeBar.placeholder")}
+                        onInput={handleInput}
+                        onKeyDown={handleKeyDown}
+                        onFocus={(e) => {
+                            e.currentTarget.style.borderColor = `color-mix(in srgb, ${fg} 25%, ${bg} 75%)`;
+                            e.currentTarget.style.boxShadow = `inset 0 1px 3px color-mix(in srgb, ${bg} 80%, transparent), 0 0 0 1px color-mix(in srgb, ${fg} 8%, transparent)`;
+                        }}
+                        onBlur={(e) => {
+                            e.currentTarget.style.borderColor = `color-mix(in srgb, ${fg} 12%, ${bg} 88%)`;
+                            e.currentTarget.style.boxShadow = `inset 0 1px 3px color-mix(in srgb, ${bg} 80%, transparent)`;
+                        }}
+                    />
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-0.5 pb-[3px]">
+                    <button
+                        className="h-7 w-7 flex items-center justify-center rounded-md transition-colors duration-150"
+                        style={{
+                            color: fg,
+                            background: `color-mix(in srgb, ${fg} 8%, transparent)`,
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = `color-mix(in srgb, ${fg} 16%, transparent)`;
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = `color-mix(in srgb, ${fg} 8%, transparent)`;
+                        }}
+                        onClick={handleSend}
+                        title={t("terminal.composeBar.send")}
+                    >
+                        <Send size={13} />
+                    </button>
+                    <button
+                        className="h-7 w-7 flex items-center justify-center rounded-md transition-colors duration-150"
+                        style={{
+                            color: `color-mix(in srgb, ${fg} 50%, transparent)`,
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = `color-mix(in srgb, ${fg} 10%, transparent)`;
+                            e.currentTarget.style.color = fg;
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.color = `color-mix(in srgb, ${fg} 50%, transparent)`;
+                        }}
+                        onClick={onClose}
+                        title={t("terminal.composeBar.close")}
+                    >
+                        <X size={13} />
+                    </button>
+                </div>
             </div>
         </div>
     );
