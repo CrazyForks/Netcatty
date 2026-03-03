@@ -67,11 +67,16 @@ async function uploadFile(localPath, remotePath, client, fileSize, transfer, sen
     if (fastSftp && typeof fastSftp.fastPut === "function") {
       return new Promise((resolve, reject) => {
         let settled = false;
+        let onFastSftpError = null;
         const finish = (err) => {
           if (settled) return;
           settled = true;
           if (transfer.abort === abortFastTransfer) {
             transfer.abort = null;
+          }
+          if (onFastSftpError) {
+            try { fastSftp.removeListener("error", onFastSftpError); } catch { }
+            onFastSftpError = null;
           }
           try { fastSftp.end(); } catch { }
 
@@ -86,6 +91,8 @@ async function uploadFile(localPath, remotePath, client, fileSize, transfer, sen
           finish(new Error("Transfer cancelled"));
         };
         transfer.abort = abortFastTransfer;
+        onFastSftpError = (err) => finish(err);
+        fastSftp.once("error", onFastSftpError);
 
         if (transfer.cancelled) {
           finish(new Error("Transfer cancelled"));
@@ -167,11 +174,16 @@ async function downloadFile(remotePath, localPath, client, fileSize, transfer, s
     if (fastSftp && typeof fastSftp.fastGet === "function") {
       return new Promise((resolve, reject) => {
         let settled = false;
+        let onFastSftpError = null;
         const finish = (err) => {
           if (settled) return;
           settled = true;
           if (transfer.abort === abortFastTransfer) {
             transfer.abort = null;
+          }
+          if (onFastSftpError) {
+            try { fastSftp.removeListener("error", onFastSftpError); } catch { }
+            onFastSftpError = null;
           }
           try { fastSftp.end(); } catch { }
 
@@ -186,6 +198,8 @@ async function downloadFile(remotePath, localPath, client, fileSize, transfer, s
           finish(new Error("Transfer cancelled"));
         };
         transfer.abort = abortFastTransfer;
+        onFastSftpError = (err) => finish(err);
+        fastSftp.once("error", onFastSftpError);
 
         if (transfer.cancelled) {
           finish(new Error("Transfer cancelled"));
