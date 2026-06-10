@@ -156,6 +156,10 @@ module.exports = {
         icon: 'icons',
         target: ['AppImage', 'deb', 'rpm', 'pacman'],
         category: 'Development',
+        // FPM deb/rpm/pacman packages bypass distro icon-cache hooks; refresh
+        // hicolor after install/remove so launchers resolve Icon=netcatty (#1358).
+        afterInstall: 'scripts/linux/after-install.tpl',
+        afterRemove: 'scripts/linux/after-remove.tpl',
         extraResources: [...moshExtraResources('linux'), ...etExtraResources('linux')]
     },
     deb: {

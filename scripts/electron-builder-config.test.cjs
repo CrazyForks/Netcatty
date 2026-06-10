@@ -95,3 +95,29 @@ test("linux packaging includes an Arch Linux pacman package target", () => {
     "linux package builds must publish AppImage, Debian, RPM, and Arch pacman artifacts",
   );
 });
+
+test("linux FPM packages refresh the hicolor icon cache after install and remove", () => {
+  const fs = require("node:fs");
+  const path = require("node:path");
+
+  assert.equal(
+    config.linux.afterInstall,
+    "scripts/linux/after-install.tpl",
+    "linux.afterInstall must point at the custom FPM post-install template",
+  );
+  assert.equal(
+    config.linux.afterRemove,
+    "scripts/linux/after-remove.tpl",
+    "linux.afterRemove must point at the custom FPM post-remove template",
+  );
+
+  for (const relPath of [config.linux.afterInstall, config.linux.afterRemove]) {
+    const file = path.join(__dirname, "..", relPath);
+    const contents = fs.readFileSync(file, "utf8");
+    assert.match(
+      contents,
+      /gtk-update-icon-cache.*\/usr\/share\/icons\/hicolor/,
+      `${relPath} must refresh the hicolor icon cache`,
+    );
+  }
+});
